@@ -46,10 +46,40 @@
         
         console.log('[SillyTavern Auto-Auth] 检测到401错误，使用凭证重新访问...');
         const authUrl = buildAuthUrl();
+        const originalUrl = window.location.href;
+        
+        // 标记已进行认证，避免重复认证
+        sessionStorage.setItem('sillyTavern_auth_in_progress', 'true');
         
         setTimeout(() => {
             window.location.href = authUrl;
         }, 300);
+    }
+    
+    /**
+     * 检查认证是否已完成，自动重新加载原链接
+     */
+    function checkAuthCompletion() {
+        const authInProgress = sessionStorage.getItem('sillyTavern_auth_in_progress');
+        
+        if (authInProgress === 'true') {
+            // 清除标记
+            sessionStorage.removeItem('sillyTavern_auth_in_progress');
+            
+            // 检查当前URL是否仍包含凭证
+            const currentUrl = window.location.href;
+            if (currentUrl.includes('@')) {
+                console.log('[SillyTavern Auto-Auth] 认证成功，重新加载原链接...');
+                
+                // 构建清理后的URL
+                const cleanUrl = currentUrl.replace(/^(https?:\/\/)([^:@]+):([^@]+)@/, '$1');
+                
+                // 延迟一小段时间确保认证已完全生效
+                setTimeout(() => {
+                    window.location.href = cleanUrl;
+                }, 500);
+            }
+        }
     }
     
     /**
@@ -66,6 +96,9 @@
      * 初始化
      */
     function init() {
+        // 首先检查认证是否已完成
+        checkAuthCompletion();
+        
         // 页面加载完成后检查
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', checkPage);
