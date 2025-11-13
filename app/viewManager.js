@@ -103,6 +103,7 @@ class ViewManager {
         this.injectJsCode(view, name);
         this.setProxy(mySession, name)
         this.handleBasicAuth(view)
+        this.handleCredentialURLRedirect(view, url)
 
         Utility.loadWithLoading(view, url).then(()=>{
             eventManager.emit('set:title', view.webContents.getTitle());
@@ -241,6 +242,42 @@ class ViewManager {
                 }
             });
         });
+    }
+
+    handleCredentialURLRedirect(view, originalUrl) {
+        // 检测URL中是否包含用户名:密码格式
+        const urlPattern = /^(https?:\/\/)([^:@]+):([^@]+)@(.+)$/;
+        const match = originalUrl.match(urlPattern);
+        
+        if (!match) {
+            return; // URL中没有凭证，无需处理
+        }
+        
+        const protocol = match[1];
+        const cleanUrl = protocol + match[4];
+        let redirected = false;
+        
+        // 监听页面加载完成事件，在认证成功后重定向到清理后的URL
+        const onDidFinishLoad = () => {
+            if (redirected) return;
+            
+            const currentUrl = view.webContents.getURL();
+            // 如果当前URL仍然包含凭证，说明需要重定向
+            if (currentUrl.includes('@') && currentUrl.match(urlPattern)) {
+                redirected = true;
+                // 延迟一小段时间确保认证已完成
+                setTimeout(() => {
+                    view.webContents.loadURL(cleanUrl).catch(err => {
+                        console.error('重定向到清理URL失败:', err);
+                    });
+                }, 300);
+            } else if (!currentUrl.includes('@')) {
+                // 已经是清理后的URL，移除监听器
+                view.webContents.removeListener('did-finish-load', onDidFinishLoad);
+            }
+        };
+        
+        view.webContents.on('did-finish-load', onDidFinishLoad);
     }
 }
 
