@@ -1,4 +1,4 @@
-import {WebContentsView, session, shell} from 'electron'
+import {WebContentsView, session, shell, dialog, BrowserWindow} from 'electron'
 import eventManager from './eventManager.js'
 import tbsDbManager from './store/tbsDbManager.js'
 import fingerPrint from "./disguise/fingerPrint.js";
@@ -102,6 +102,7 @@ class ViewManager {
         this.renderProcessGone(view);
         this.injectJsCode(view, name);
         this.setProxy(mySession, name)
+        this.handleBasicAuth(view)
 
         Utility.loadWithLoading(view, url).then(()=>{
             eventManager.emit('set:title', view.webContents.getTitle());
@@ -182,6 +183,63 @@ class ViewManager {
         view.webContents.on('render-process-gone', (event, details) => {
             console.error('The rendering process has crashed:', details.reason);
             if (!view.webContents.isDestroyed()) view.webContents.reload();
+        });
+    }
+
+    handleBasicAuth(view) {
+        view.webContents.session.on('login', (event, webContents, details, auth) => {
+            event.preventDefault();
+            
+            // 获取主窗口用于显示认证对话框
+            const mainWindow = BrowserWindow.getFocusedWindow();
+            
+            if (!mainWindow) {
+                auth.cancel();
+                return;
+            }
+            
+            dialog.showMessageBox(mainWindow, {
+                type: 'question',
+                title: '需要身份验证',
+                message: `服务器 ${details.host} 需要身份验证`,
+                detail: `请输入用户名和密码来访问 ${details.realm || '该资源'}`,
+                buttons: ['取消', '继续'],
+                defaultId: 1,
+                cancelId: 0
+            }).then(result => {
+                if (result.response === 1) {
+                    // 显示输入对话框获取用户名
+                    dialog.showInputBox(mainWindow, {
+                        title: '用户名',
+                        label: '请输入用户名:',
+                        type: 'text'
+                    }).then(usernameResult => {
+                        if (usernameResult.canceled) {
+                            auth.cancel();
+                            return;
+                        }
+                        
+                        const username = usernameResult.text;
+                        
+                        // 显示输入对话框获取密码
+                        dialog.showInputBox(mainWindow, {
+                            title: '密码',
+                            label: '请输入密码:',
+                            type: 'password'
+                        }).then(passwordResult => {
+                            if (passwordResult.canceled) {
+                                auth.cancel();
+                                return;
+                            }
+                            
+                            const password = passwordResult.text;
+                            auth.login(username, password);
+                        });
+                    });
+                } else {
+                    auth.cancel();
+                }
+            });
         });
     }
 }
