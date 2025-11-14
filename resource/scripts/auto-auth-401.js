@@ -74,39 +74,10 @@
         const authenticatedUrl = getAuthenticatedUrl();
         console.log(`[Auto-Auth] 重定向到: ${authenticatedUrl.replace(CONFIG.password, '****')}`);
         
-        // 标记已进行认证
-        sessionStorage.setItem('auto_auth_in_progress', 'true');
-        
         // 延迟重定向，确保当前页面加载完成
         setTimeout(() => {
             window.location.href = authenticatedUrl;
         }, CONFIG.retryDelay);
-    }
-    
-    /**
-     * 检查认证是否已完成，自动重新加载原链接
-     */
-    function checkAuthCompletion() {
-        const authInProgress = sessionStorage.getItem('auto_auth_in_progress');
-        
-        if (authInProgress === 'true') {
-            // 清除标记
-            sessionStorage.removeItem('auto_auth_in_progress');
-            
-            // 检查当前URL是否仍包含凭证
-            const currentUrl = window.location.href;
-            if (currentUrl.includes('@')) {
-                console.log('[Auto-Auth] 认证成功，重新加载原链接...');
-                
-                // 构建清理后的URL
-                const cleanUrl = currentUrl.replace(/^(https?:\/\/)([^:@]+):([^@]+)@/, '$1');
-                
-                // 延迟一小段时间确保认证已完全生效
-                setTimeout(() => {
-                    window.location.href = cleanUrl;
-                }, 500);
-            }
-        }
     }
     
     /**
@@ -196,9 +167,6 @@
     function init() {
         console.log('[Auto-Auth] 脚本已加载，开始监听401错误...');
         console.log(`[Auto-Auth] 配置 - 用户名: ${CONFIG.username}, 最大重试次数: ${CONFIG.maxRetries}`);
-        
-        // 首先检查认证是否已完成
-        checkAuthCompletion();
         
         // 初始化各种监听器
         initializeListeners();

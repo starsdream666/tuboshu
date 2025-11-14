@@ -1,9 +1,9 @@
-# 快速开始 - Silly Tavern 自动认证
+# 快速开始 - Silly Tavern 自动认证 v2.0
 
 ## 30秒快速配置
 
 ### 第一步：复制脚本
-打开 `auto-auth-401-sillyTavern.js` 文件，复制全部内容
+打开 `auto-auth-401-sillyTavern-v2.js` 文件（推荐），复制全部内容
 
 ### 第二步：在Tuboshu中配置
 1. 在Tuboshu中添加或编辑Silly Tavern网站
@@ -22,31 +22,40 @@ const PASSWORD = 'boyu123456789';  // 改成你的密码
 
 ---
 
-## 工作流程
+## v2.0 完整工作流程
 
 ```
-访问网站
-  ↓
-检测到401错误
-  ↓
-自动重定向到: https://star:boyu123456789@your-domain.com
-  ↓
-认证成功，页面正常显示
+1. 访问网站 → https://your-sillyTavern.com
+     ↓
+2. 检测到401错误
+     ↓
+3. 自动认证 → https://star:boyu123456789@your-sillyTavern.com
+     ↓
+4. 认证成功（页面正常显示）
+     ↓
+5. 等待2秒（CLEANUP_DELAY）
+     ↓
+6. 自动清理URL → https://your-sillyTavern.com
+     ↓
+7. 最终效果：干净的URL + 已认证状态 ✨
 ```
 
 ---
 
-## 脚本内容预览
+## v2.0 脚本内容预览
 
 ```javascript
 const USERNAME = 'star';
 const PASSWORD = 'boyu123456789';
+const CLEANUP_DELAY = 2000; // 清理延迟时间
 
-// 脚本会自动：
+// v2.0 脚本会自动：
 // 1. 检测401错误
-// 2. 构建认证URL
-// 3. 自动重定向
-// 4. 页面正常加载
+// 2. 构建认证URL → username:password@domain
+// 3. 自动重定向并认证
+// 4. 等待CLEANUP_DELAY毫秒
+// 5. 清理URL凭证 → 恢复原始干净URL
+// 6. 页面正常，URL干净，保持认证状态 ✨
 ```
 
 ---
@@ -67,10 +76,11 @@ const PASSWORD = 'boyu123456789';
 tuboshu/
 └── resource/
     └── scripts/
-        ├── auto-auth-401-sillyTavern.js  ← 推荐使用
-        ├── auto-auth-401.js              ← 通用版本
-        ├── README.md                     ← 详细文档
-        └── QUICK_START.md                ← 本文件
+        ├── auto-auth-401-sillyTavern-v2.js  ← v2.0 最新推荐
+        ├── auto-auth-401-sillyTavern.js     ← v1.1 经典版本
+        ├── auto-auth-401.js                 ← 通用版本
+        ├── README.md                        ← 详细文档
+        └── QUICK_START.md                   ← 本文件
 ```
 
 ---

@@ -4,9 +4,16 @@
 
 ### 文件说明
 
-#### 1. `auto-auth-401-sillyTavern.js` ⭐ 推荐使用
-- **用途**: 专为Silly Tavern优化的自动认证脚本
-- **功能**: 检测到401认证错误时，自动使用 `username:password@url` 方式重新访问
+#### 1. `auto-auth-401-sillyTavern-v2.js` ⭐⭐ 最新推荐
+- **用途**: 带URL清理功能的自动认证脚本
+- **功能**: 检测到401认证错误时自动认证，认证完成后自动清理URL中的凭证
+- **工作流程**: 401错误 → 自动认证 → 等待2秒 → 清理URL重定向
+- **优点**: 完整的认证和清理流程，用户体验最佳
+- **推荐指数**: ⭐⭐⭐⭐⭐⭐
+
+#### 2. `auto-auth-401-sillyTavern.js` ⭐ 经典版本
+- **用途**: 专为Silly Tavern优化的自动认证脚本（已更新为URL清理版）
+- **功能**: 同v2.js，包含完整的认证和URL清理功能
 - **优点**: 代码简洁，性能好，专门针对Silly Tavern优化
 - **推荐指数**: ⭐⭐⭐⭐⭐
 
@@ -88,6 +95,24 @@
 认证成功，页面正常加载
 ```
 
+### v2.0版本完整流程
+
+```
+1. 访问 → https://sillyTavern.example.com
+     ↓
+2. 检测401错误
+     ↓  
+3. 自动重定向 → https://star:boyu123456789@sillyTavern.example.com
+     ↓
+4. 服务器验证凭证成功
+     ↓
+5. 等待2秒（可配置）
+     ↓
+6. 自动清理URL → https://sillyTavern.example.com
+     ↓
+7. 最终页面：干净的URL，已认证状态
+```
+
 ### 构建认证URL的方式
 
 ```javascript
@@ -96,6 +121,9 @@ https://sillyTavern.example.com/api/data
 
 // 构建后的认证URL
 https://star:boyu123456789@sillyTavern.example.com/api/data
+
+// 清理后的URL（v2.0新功能）
+https://sillyTavern.example.com/api/data (保持认证状态)
 ```
 
 ---
@@ -171,6 +199,17 @@ https://star:boyu123456789@sillyTavern.example.com/api/data
 ---
 
 ## 更新日志
+
+### v2.0 (2025-11-14)
+- 🎉 新增URL清理功能：认证成功后自动去除URL中的凭证部分
+- ⚡ 优化认证流程：401错误 → 认证 → 等待2秒 → 清理URL重定向
+- 🔧 可配置清理延迟时间（默认2000ms）
+- 📝 改进日志输出，更清晰的状态提示
+- 🚀 创建v2.js独立版本，保持向后兼容
+
+### v1.1 (2025-11-13)
+- 更新原有脚本，集成URL清理功能
+- 保持原有API不变，增强功能
 
 ### v1.0 (2025-11-13)
 - 初始版本
