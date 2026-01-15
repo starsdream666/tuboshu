@@ -5,6 +5,7 @@ import trayManager from'./trayManager.js'
 import shortcutManager from './shortcut/shortcutManager.js'
 import contextManager from "./context/contextManager.js"
 import AutoLaunch from "./utility/autoLaunch.js"
+import { registerIpcHandlers } from './extension/extensionIpc.js'
 
 // app.disableHardwareAcceleration();
 //app.commandLine.appendSwitch('disable-gpu');
@@ -29,6 +30,9 @@ app.singleLock = app.requestSingleInstanceLock();
 
 app.whenReady().then(() => {
   if (!app.singleLock) return app.quit();
+
+  // 注册 1Password 扩展 IPC 处理器
+  registerIpcHandlers();
 
   windowManager.createWindow();
   trayManager.createTray();

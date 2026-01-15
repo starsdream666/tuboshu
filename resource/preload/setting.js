@@ -24,6 +24,12 @@ contextBridge.exposeInMainWorld('myApi', {
     clearCache: () => ipcRenderer.send('dataSync:clear:cache'),
     getAppConfig: () => ipcRenderer.invoke('dataSync:get:data'),
     restoreAppConfig: (data) => ipcRenderer.send('dataSync:get:data', data),
+
+    // 1Password 扩展配置 API
+    get1PasswordConfig: () => ipcRenderer.invoke('1password:get-config'),
+    set1PasswordConfig: (config) => ipcRenderer.invoke('1password:set-config', config),
+    validate1PasswordPath: (path) => ipcRenderer.invoke('1password:validate-path', path),
+    select1PasswordFolder: () => ipcRenderer.invoke('1password:select-folder'),
 });
 
 window.addEventListener('contextmenu', (e) => {

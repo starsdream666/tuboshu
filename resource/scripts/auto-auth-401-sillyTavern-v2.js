@@ -76,12 +76,13 @@
     
     // 检查页面状态
     function checkPage() {
-        if (hasCredentialsInUrl() && !is401Error()) {
-            console.log('[Auto-Auth] 检测到带凭证URL且页面正常，准备清理...');
-            cleanupAndRedirect();
-        } else if (is401Error() && !authAttempted) {
+        if (is401Error() && !authAttempted) {
             console.log('[Auto-Auth] 发现401错误页面，开始认证...');
             authenticate();
+        } else if (hasCredentialsInUrl() && !cleanupScheduled) {
+            // 如果URL包含凭证且还没有安排清理，直接启动清理倒计时
+            console.log('[Auto-Auth] 检测到带凭证URL，启动清理倒计时...');
+            cleanupAndRedirect();
         }
     }
     
@@ -96,7 +97,8 @@
         
         // 监听页面变化（AJAX加载等）
         const observer = new MutationObserver(() => {
-            if (hasCredentialsInUrl() && !is401Error() && !cleanupScheduled) {
+            if (hasCredentialsInUrl() && !cleanupScheduled) {
+                console.log('[Auto-Auth] DOM变化检测到凭证URL，启动清理...');
                 cleanupAndRedirect();
             } else if (!authAttempted && is401Error()) {
                 authenticate();
@@ -115,8 +117,8 @@
                 if (response.status === 401 && !authAttempted) {
                     console.log('[Auto-Auth] 检测到401响应，开始认证...');
                     authenticate();
-                } else if (hasCredentialsInUrl() && response.ok && !cleanupScheduled) {
-                    console.log('[Auto-Auth] 请求成功且URL含凭证，准备清理...');
+                } else if (hasCredentialsInUrl() && !cleanupScheduled) {
+                    console.log('[Auto-Auth] Fetch完成且URL含凭证，启动清理...');
                     cleanupAndRedirect();
                 }
                 return response;

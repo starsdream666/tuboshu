@@ -2,8 +2,16 @@
 
 ## 30秒快速配置
 
-### 第一步：复制脚本
-打开 `auto-auth-401-sillyTavern-v2.js` 文件（推荐），复制全部内容
+### 第一步：选择并复制脚本
+
+**如果清理功能不工作，推荐使用：**
+- `auto-auth-401-debug.js` - 调试版本，查看详细日志
+- `auto-auth-401-simple.js` - 简化版本，更可靠的逻辑
+
+**正常使用推荐：**
+- `auto-auth-401-sillyTavern-v2.js` - 完整版本
+
+复制选择的脚本文件全部内容
 
 ### 第二步：在Tuboshu中配置
 1. 在Tuboshu中添加或编辑Silly Tavern网站
@@ -67,6 +75,8 @@ const CLEANUP_DELAY = 2000; // 清理延迟时间
 | 脚本没有执行 | 检查是否正确粘贴到JS脚本字段 |
 | 还是显示401 | 检查用户名和密码是否正确 |
 | 页面一直重定向 | 检查服务器是否真的需要认证 |
+| **清理功能不工作** | **使用 debug.js 调试版本查看日志** |
+| **URL仍有凭证** | **尝试 simple.js 简化版本** |
 
 ---
 
@@ -76,7 +86,9 @@ const CLEANUP_DELAY = 2000; // 清理延迟时间
 tuboshu/
 └── resource/
     └── scripts/
-        ├── auto-auth-401-sillyTavern-v2.js  ← v2.0 最新推荐
+        ├── auto-auth-401-debug.js           ← 🔧 调试版本（问题排查）
+        ├── auto-auth-401-simple.js          ← ⚡ 简化版本（提高成功率）
+        ├── auto-auth-401-sillyTavern-v2.js  ← ⭐ v2.0 完整版本
         ├── auto-auth-401-sillyTavern.js     ← v1.1 经典版本
         ├── auto-auth-401.js                 ← 通用版本
         ├── README.md                        ← 详细文档

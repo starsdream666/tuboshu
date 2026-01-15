@@ -37,7 +37,9 @@ export default Object.freeze({
         isAutoLaunch:0,
         leftMenuPosition:'left',
         systemTheme:'system',
-        howLinkOpenMethod:"tuboshu"
+        howLinkOpenMethod:"tuboshu",
+        is1PasswordEnabled: 0,
+        onePasswordExtensionPath: ''
     },
 
     SETTING:[

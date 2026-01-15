@@ -5,6 +5,7 @@ import fingerPrint from "./disguise/fingerPrint.js";
 import storeManager from "./store/storeManager.js";
 import CONS from './constants.js'
 import Utility from "./utility/utility.js";
+import extensionManager from './extension/extensionManager.js';
 
 class ViewManager {
     constructor() {
@@ -96,6 +97,12 @@ class ViewManager {
             Utility.alterRequestHeader(view, headers)
             Utility.alterResponseHeader(view)
             Utility.loadExtensions(view).finally()
+            
+            // 加载 1Password 扩展（不阻塞视图创建）
+            extensionManager.load1PasswordExtension(view.webContents.session)
+                .catch(error => {
+                    console.error('[1Password] Error loading extension:', error);
+                });
         }
 
         view.webContents.setZoomLevel(0)

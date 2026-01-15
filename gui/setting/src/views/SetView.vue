@@ -18,6 +18,12 @@ const leftMenuPosition = ref('left')
 const howLinkOpenMethod = ref('tuboshu')
 const defaultWindowSize = ref({width: 1024, height: 800})
 
+// 1Password 扩展配置
+const is1PasswordEnabled = ref(false)
+const onePasswordExtensionPath = ref('')
+const pathValidationStatus = ref('none') // 'none' | 'validating' | 'valid' | 'invalid'
+const pathValidationMessage = ref('')
+
 const version = ref({
   version: '加载中...',
   electron: '--',
@@ -61,6 +67,9 @@ onMounted(async () => {
   isAutoLaunch.value = getValue('isAutoLaunch', settings);
   defaultWindowSize.value = getValue('defaultWindowSize', settings);
   howLinkOpenMethod.value = getValue('howLinkOpenMethod', settings);
+
+  // 加载 1Password 扩展配置
+  await load1PasswordConfig();
 })
 
 
@@ -154,6 +163,97 @@ const handleWinChange = (e) => {
   }
   window.myApi.updateSetting({ name : 'defaultWindowSize', value: setting});
   message.success(`设置已更新,请重新启动`)
+}
+
+// 1Password 扩展配置相关函数
+const load1PasswordConfig = async () => {
+  try {
+    const config = await window.myApi.get1PasswordConfig();
+    is1PasswordEnabled.value = config.enabled;
+    onePasswordExtensionPath.value = config.path || '';
+    
+    // 如果有路径，验证它
+    if (onePasswordExtensionPath.value) {
+      await validatePath(onePasswordExtensionPath.value);
+    }
+  } catch (error) {
+    console.error('Failed to load 1Password config:', error);
+  }
+}
+
+const change1PasswordEnabled = async (val) => {
+  try {
+    const result = await window.myApi.set1PasswordConfig({ enabled: val });
+    if (result.success) {
+      message.success('设置已更新，请重新启动');
+    } else {
+      message.error(result.error || '保存失败');
+      // 恢复原值
+      is1PasswordEnabled.value = !val;
+    }
+  } catch (error) {
+    message.error('保存失败: ' + error.message);
+    is1PasswordEnabled.value = !val;
+  }
+}
+
+const validatePath = async (path) => {
+  if (!path) {
+    pathValidationStatus.value = 'none';
+    pathValidationMessage.value = '';
+    return;
+  }
+  
+  pathValidationStatus.value = 'validating';
+  pathValidationMessage.value = '验证中...';
+  
+  try {
+    const result = await window.myApi.validate1PasswordPath(path);
+    if (result.valid) {
+      pathValidationStatus.value = 'valid';
+      pathValidationMessage.value = result.extensionName 
+        ? `有效: ${result.extensionName}` 
+        : '路径有效';
+    } else {
+      pathValidationStatus.value = 'invalid';
+      pathValidationMessage.value = result.error || '路径无效';
+    }
+  } catch (error) {
+    pathValidationStatus.value = 'invalid';
+    pathValidationMessage.value = '验证失败: ' + error.message;
+  }
+}
+
+const handlePathChange = async () => {
+  await validatePath(onePasswordExtensionPath.value);
+  
+  // 只有路径有效时才保存
+  if (pathValidationStatus.value === 'valid') {
+    try {
+      const result = await window.myApi.set1PasswordConfig({ 
+        path: onePasswordExtensionPath.value 
+      });
+      if (result.success) {
+        message.success('路径已保存，请重新启动');
+      } else {
+        message.error(result.error || '保存失败');
+      }
+    } catch (error) {
+      message.error('保存失败: ' + error.message);
+    }
+  }
+}
+
+const handleSelectFolder = async () => {
+  try {
+    const result = await window.myApi.select1PasswordFolder();
+    if (!result.canceled && result.path) {
+      onePasswordExtensionPath.value = result.path;
+      await handlePathChange();
+    }
+  } catch (error) {
+    message.error('选择文件夹失败: ' + error.message);
+  }
 }
 
 const handleBtnClick = async ()=> {
@@ -335,6 +435,67 @@ const handleClose = () =>{
       </div>
     </n-card>
 
+    <!-- 1Password 扩展配置 -->
+    <n-alert :show-icon="false" type="info" style="margin-top: 1.5rem; margin-bottom: 1rem;">
+      <n-h3 style="margin-bottom: 0;">1Password 扩展</n-h3>
+    </n-alert>
+
+    <n-card embedded :bordered="true">
+      <div class="wrap">
+        <div class="card">
+          <div class="vleft">启用扩展：</div>
+          <div class="vright">
+            <n-switch size="medium"
+                      v-model:value="is1PasswordEnabled"
+                      @update:value="change1PasswordEnabled" style="font-size:12px;" >
+              <template #checked>开启</template>
+              <template #unchecked>关闭</template>
+            </n-switch>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="vleft">扩展路径：</div>
+          <div class="vright path-input-group">
+            <n-input-group>
+              <n-input 
+                v-model:value="onePasswordExtensionPath"
+                placeholder="选择 1Password 扩展目录"
+                :status="pathValidationStatus === 'invalid' ? 'error' : pathValidationStatus === 'valid' ? 'success' : undefined"
+                @blur="handlePathChange"
+                style="flex: 1;"
+              />
+              <n-button @click="handleSelectFolder" type="primary">
+                浏览
+              </n-button>
+            </n-input-group>
+          </div>
+        </div>
+
+        <div class="card" v-if="pathValidationStatus !== 'none'">
+          <div class="vleft">验证状态：</div>
+          <div class="vright">
+            <n-tag 
+              :type="pathValidationStatus === 'valid' ? 'success' : pathValidationStatus === 'invalid' ? 'error' : 'info'"
+              :bordered="false"
+              size="small"
+            >
+              {{ pathValidationMessage }}
+            </n-tag>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="vleft"></div>
+          <div class="vright">
+            <n-text depth="3" style="font-size: 12px;">
+              提示：请选择已解压的 1Password Chrome 扩展目录（包含 manifest.json 文件）
+            </n-text>
+          </div>
+        </div>
+      </div>
+    </n-card>
+
     <n-card embedded :bordered="true" style="margin-top: 20px;">
       <n-button :loading="btnLoading" @click="handleBtnClick">{{btnText}}</n-button>
     </n-card>
@@ -397,5 +558,9 @@ const handleClose = () =>{
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+.path-input-group {
+  flex: 1;
+  max-width: 500px;
 }
 </style>
