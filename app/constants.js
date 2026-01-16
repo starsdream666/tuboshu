@@ -9,7 +9,9 @@ const appPath = path.join(___dirname, '..');
 // const SETTING_URL = app.isPackaged
 //     ? `file://${path.join(appPath, 'gui/dist/index.html')}`
 //     : 'http://localhost:5173/';
-const SETTING_URL = app.isPackaged ? 'http://tuboshu.upsort.com' : 'http://localhost:5173/';
+const SETTING_URL = app.isPackaged
+    ? `file://${path.join(appPath, 'gui/dist/index.html')}`
+    : 'http://localhost:5173/';
 
 export default Object.freeze({
     APP:{
