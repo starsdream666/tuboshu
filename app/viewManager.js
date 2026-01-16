@@ -75,7 +75,6 @@ class ViewManager {
         const mySession = session.fromPartition(partitionName);
 
         const isHttpAddr = url.toLowerCase().startsWith("http");
-        const isFileAddr = url.toLowerCase().startsWith("file:");
         const preloadjs = Utility.selectAppropriatePreload(url);
 
         const unique = Date.now();
@@ -84,7 +83,7 @@ class ViewManager {
         const view = new WebContentsView({
             webPreferences: {
                 sandbox: true,
-                webSecurity: !isFileAddr, // 对 file:// 协议禁用 webSecurity 以支持 ES 模块
+                webSecurity: true,
                 nodeIntegration: false,
                 contextIsolation: true,
                 dnsPrefetch: false,

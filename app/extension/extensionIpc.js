@@ -10,10 +10,12 @@
  * - 1password:set-config: 更新配置
  * - 1password:validate-path: 验证扩展路径
  * - 1password:select-folder: 打开文件夹选择对话框
+ * - 1password:show-window: 显示配置窗口
  */
 
 import { ipcMain, dialog } from 'electron';
 import extensionManager from './extensionManager.js';
+import onePasswordWindow from './onePasswordWindow.js';
 
 /**
  * IPC 通道常量定义
@@ -22,7 +24,8 @@ const IPC_CHANNELS = {
     GET_1PASSWORD_CONFIG: '1password:get-config',
     SET_1PASSWORD_CONFIG: '1password:set-config',
     VALIDATE_EXTENSION_PATH: '1password:validate-path',
-    SELECT_EXTENSION_FOLDER: '1password:select-folder'
+    SELECT_EXTENSION_FOLDER: '1password:select-folder',
+    SHOW_WINDOW: '1password:show-window'
 };
 
 /**
@@ -44,11 +47,11 @@ function registerIpcHandlers() {
 
     /**
      * 设置 1Password 扩展配置
-     * @param {Object} event - IPC 事件对象
+     * @param {Object} _event - IPC 事件对象
      * @param {{enabled?: boolean, path?: string}} config - 要更新的配置
      * @returns {Promise<{success: boolean, error?: string}>}
      */
-    ipcMain.handle(IPC_CHANNELS.SET_1PASSWORD_CONFIG, async (event, config) => {
+    ipcMain.handle(IPC_CHANNELS.SET_1PASSWORD_CONFIG, async (_event, config) => {
         try {
             return await extensionManager.updateConfig(config);
         } catch (error) {
@@ -59,11 +62,11 @@ function registerIpcHandlers() {
 
     /**
      * 验证扩展路径是否有效
-     * @param {Object} event - IPC 事件对象
+     * @param {Object} _event - IPC 事件对象
      * @param {string} extensionPath - 要验证的扩展路径
      * @returns {Promise<{valid: boolean, error?: string, manifestVersion?: number, extensionName?: string}>}
      */
-    ipcMain.handle(IPC_CHANNELS.VALIDATE_EXTENSION_PATH, async (event, extensionPath) => {
+    ipcMain.handle(IPC_CHANNELS.VALIDATE_EXTENSION_PATH, async (_event, extensionPath) => {
         try {
             return await extensionManager.validateExtensionPath(extensionPath);
         } catch (error) {
@@ -98,7 +101,22 @@ function registerIpcHandlers() {
         }
     });
 
+    /**
+     * 显示 1Password 配置窗口
+     */
+    ipcMain.handle(IPC_CHANNELS.SHOW_WINDOW, async () => {
+        onePasswordWindow.show();
+        return { success: true };
+    });
+
     console.log('[1Password IPC] IPC handlers registered');
 }
 
-export { registerIpcHandlers, IPC_CHANNELS };
+/**
+ * 显示 1Password 配置窗口（供其他模块调用）
+ */
+function showOnePasswordWindow() {
+    onePasswordWindow.show();
+}
+
+export { registerIpcHandlers, IPC_CHANNELS, showOnePasswordWindow };

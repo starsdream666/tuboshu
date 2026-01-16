@@ -2,6 +2,7 @@ import { Tray, Menu, app, shell} from 'electron'
 import path from 'path'
 import CONS from './constants.js'
 import windowManager from './windowManager.js'
+import { showOnePasswordWindow } from './extension/extensionIpc.js'
 
 const selfUrl = "https://github.com/deepshit2025/tuboshu";
 class TrayManager {
@@ -30,6 +31,7 @@ class TrayManager {
         const contextMenu = Menu.buildFromTemplate([
             { label: '官网', click: () => this.openWebsite(selfUrl) },
             { label: '设置', click: () => this.autoClickSettings() },
+            { label: '1Password 配置', click: () => showOnePasswordWindow() },
             { type: 'separator' },
             { label: '显示/隐藏', click: () => this.toggleWindow() },
             { label: '退出', click: () => this.reallyQuitApp() }

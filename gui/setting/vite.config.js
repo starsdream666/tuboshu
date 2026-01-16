@@ -12,16 +12,6 @@ export default defineConfig({
   build: {
     emptyOutDir: true,
     outDir: '../dist',
-    modulePreload: false,
-    cssCodeSplit: false,
-    rollupOptions: {
-      output: {
-        format: 'iife',
-        entryFileNames: 'assets/[name].js',
-        chunkFileNames: 'assets/[name].js',
-        assetFileNames: 'assets/[name].[ext]'
-      }
-    }
   },
   plugins: [
     vue(),
