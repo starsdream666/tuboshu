@@ -6,11 +6,9 @@ const ___filename = fileURLToPath(import.meta.url);
 const ___dirname =  path.dirname(___filename);
 
 const appPath = path.join(___dirname, '..');
-// const SETTING_URL = app.isPackaged
-//     ? `file://${path.join(appPath, 'gui/dist/index.html')}`
-//     : 'http://localhost:5173/';
+// 打包后使用 app.getAppPath() 获取正确的应用路径
 const SETTING_URL = app.isPackaged
-    ? `file://${path.join(appPath, 'gui/dist/index.html')}`
+    ? `file://${path.join(app.getAppPath(), 'gui/dist/index.html')}`
     : 'http://localhost:5173/';
 
 export default Object.freeze({
