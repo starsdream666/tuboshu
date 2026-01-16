@@ -98,10 +98,14 @@ class ViewManager {
             Utility.alterResponseHeader(view)
             Utility.loadExtensions(view).finally()
             
-            // 加载 1Password 扩展（不阻塞视图创建）
+            // 加载 1Password 扩展（等待完成后再加载页面）
+            console.log('[1Password] ViewManager: Starting extension load for HTTP view');
             extensionManager.load1PasswordExtension(view.webContents.session)
+                .then(result => {
+                    console.log('[1Password] ViewManager: Extension load result:', JSON.stringify(result));
+                })
                 .catch(error => {
-                    console.error('[1Password] Error loading extension:', error);
+                    console.error('[1Password] ViewManager: Error loading extension:', error);
                 });
         }
 

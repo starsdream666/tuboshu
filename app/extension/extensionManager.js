@@ -26,13 +26,20 @@ class ExtensionManager {
      * @returns {{enabled: boolean, path: string}}
      */
     getConfig() {
-        const enabled = storeManager.getSetting('is1PasswordEnabled');
-        const path = storeManager.getSetting('onePasswordExtensionPath');
+        const enabledRaw = storeManager.getSetting('is1PasswordEnabled');
+        const pathRaw = storeManager.getSetting('onePasswordExtensionPath');
         
-        return {
-            enabled: Boolean(enabled),
-            path: path || ''
+        console.log('[1Password] getConfig() raw values:');
+        console.log('[1Password]   is1PasswordEnabled:', enabledRaw, '(type:', typeof enabledRaw, ')');
+        console.log('[1Password]   onePasswordExtensionPath:', pathRaw, '(type:', typeof pathRaw, ')');
+        
+        const config = {
+            enabled: Boolean(enabledRaw),
+            path: pathRaw || ''
         };
+        
+        console.log('[1Password] getConfig() returning:', config);
+        return config;
     }
 
     /**
@@ -42,21 +49,32 @@ class ExtensionManager {
      */
     async updateConfig(config) {
         try {
+            console.log('[1Password] updateConfig() called with:', config);
+            
             if (config.enabled !== undefined) {
+                const valueToStore = config.enabled ? 1 : 0;
+                console.log('[1Password] Storing is1PasswordEnabled:', valueToStore);
                 storeManager.updateSetting({
                     name: 'is1PasswordEnabled',
-                    value: config.enabled ? 1 : 0
+                    value: valueToStore
                 });
             }
             
             if (config.path !== undefined) {
+                console.log('[1Password] Storing onePasswordExtensionPath:', config.path);
                 storeManager.updateSetting({
                     name: 'onePasswordExtensionPath',
                     value: config.path
                 });
             }
             
-            console.log('[1Password] Configuration updated:', config);
+            // 验证存储是否成功
+            const storedEnabled = storeManager.getSetting('is1PasswordEnabled');
+            const storedPath = storeManager.getSetting('onePasswordExtensionPath');
+            console.log('[1Password] Verification - stored values:');
+            console.log('[1Password]   is1PasswordEnabled:', storedEnabled);
+            console.log('[1Password]   onePasswordExtensionPath:', storedPath);
+            
             return { success: true };
         } catch (error) {
             console.error('[1Password] Failed to update configuration:', error);
@@ -96,24 +114,44 @@ class ExtensionManager {
     async load1PasswordExtension(session) {
         try {
             const config = this.getConfig();
+            console.log('[1Password] ========== EXTENSION LOAD START ==========');
+            console.log('[1Password] Config from store:', JSON.stringify(config, null, 2));
+            console.log('[1Password] enabled type:', typeof config.enabled, 'value:', config.enabled);
+            console.log('[1Password] path type:', typeof config.path, 'value:', config.path);
             
             // 检查是否启用
             if (!config.enabled) {
+                console.log('[1Password] Extension is DISABLED, skipping load');
                 return { success: true, skipped: true, reason: 'disabled' };
             }
             
+            console.log('[1Password] Extension is ENABLED, proceeding...');
+            
             // 验证路径
             const validation = await this.validateExtensionPath(config.path);
+            console.log('[1Password] Path validation result:', JSON.stringify(validation, null, 2));
+            
             if (!validation.valid) {
                 console.warn(`[1Password] Invalid extension path: ${validation.error}`);
                 return { success: false, error: validation.error };
             }
             
+            console.log('[1Password] Path validation PASSED');
+            console.log('[1Password] Extension name:', validation.extensionName);
+            console.log('[1Password] Manifest version:', validation.manifestVersion);
+            
             // 检查是否已加载（幂等性检查）
             const partitionKey = session.getStoragePath?.() || 'default';
+            console.log('[1Password] Session partition key:', partitionKey);
+            
             if (this.loadedSessions.has(partitionKey)) {
+                console.log('[1Password] Extension already loaded for this partition, skipping');
                 return { success: true, skipped: true, reason: 'already_loaded' };
             }
+            
+            console.log('[1Password] Attempting to load extension from:', config.path);
+            console.log('[1Password] session.extensions available:', !!session.extensions);
+            console.log('[1Password] session.extensions.loadExtension available:', typeof session.extensions?.loadExtension);
             
             // 加载扩展
             const extension = await session.extensions.loadExtension(config.path, {
@@ -121,12 +159,18 @@ class ExtensionManager {
             });
             
             this.loadedSessions.add(partitionKey);
-            console.log(`[1Password] Extension loaded: ${extension.name} (${extension.id})`);
+            console.log('[1Password] ========== EXTENSION LOAD SUCCESS ==========');
+            console.log(`[1Password] Extension loaded: ${extension.name}`);
+            console.log(`[1Password] Extension ID: ${extension.id}`);
+            console.log(`[1Password] Extension path: ${extension.path}`);
             
             return { success: true, extensionId: extension.id };
             
         } catch (error) {
-            console.error(`[1Password] Failed to load extension:`, error);
+            console.error('[1Password] ========== EXTENSION LOAD FAILED ==========');
+            console.error(`[1Password] Error message:`, error.message);
+            console.error(`[1Password] Error name:`, error.name);
+            console.error(`[1Password] Error stack:`, error.stack);
             return { success: false, error: error.message };
         }
     }
